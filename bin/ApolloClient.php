@@ -145,12 +145,18 @@ class ApolloClient
             curl_close($req['ch']);
             if ($code == 200) {
 				$result = json_decode($result, true);
-
 				$content = "";
 				foreach($result["configurations"] as $key => $value){
 					$content .= "\n" . $key . " = " . $value;
 				}
-				file_put_contents($req['config_file'], $content);
+
+				//数据不落盘放在共享内存里面 不落盘
+                $shm_key = ftok("/data/srv", 'c');
+                $shm_id = shmop_open($shm_key, "c", 0644, 20971520);
+                shmop_write($shm_id, strlen($content), 0);
+                $size = shmop_write($shm_id, $content, 10);
+
+//                file_put_contents($req['config_file'], $content);
             }elseif ($code != 304) {
                 echo 'pull config of namespace['.$namespaceName.'] error:'.($result ?: $error)."\n";
                 $response_list[$namespaceName] = false;
