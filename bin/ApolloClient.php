@@ -152,7 +152,7 @@ class ApolloClient
 
 				//数据不落盘放在共享内存里面 不落盘
                 $shm_key = ftok("/data/srv", 'c');
-                $shm_id = shmop_open($shm_key, "c", 0644, 20971520);
+                $shm_id = shmop_open($shm_key, "c", 0666, 20971520);
                 shmop_write($shm_id, strlen($content), 0);
                 $size = shmop_write($shm_id, $content, 10);
 
