@@ -149,14 +149,27 @@ class ApolloClient
 				foreach($result["configurations"] as $key => $value){
 					$content .= "\n" . $key . " = " . $value;
 				}
-
-				//数据不落盘放在共享内存里面 不落盘
+                //数据不落盘放在共享内存里面 不落盘
                 $shm_key = ftok("/data/srv", 'c');
                 $shm_id = shmop_open($shm_key, "c", 0666, 20971520);
+
+                //先获取缓存里面是不是已经有配置存在，如果有配置需要把已有配置和刚刚读取到的配置合并下。
+                $size = shmop_read($shm_id, 0, 10);
+                $shmop = shmop_read($shm_id, 10, (int)$size);
+                $config = parse_ini_string($shmop,false,INI_SCANNER_RAW);
+                $result = json_decode($result, true);
+                $content = "";
+                if(!empty($config)){
+                    $allConfig = array_merge($config, $result["configurations"]);
+                }else{
+                    $allConfig = $result["configurations"];
+                }
+                foreach($allConfig as $key => $value){
+                    $content .= "\n" . $key . " = " . $value;
+                }
                 shmop_write($shm_id, strlen($content), 0);
                 $size = shmop_write($shm_id, $content, 10);
-
-//                file_put_contents($req['config_file'], $content);
+                shmop_close($shm_id);
             }elseif ($code != 304) {
                 echo 'pull config of namespace['.$namespaceName.'] error:'.($result ?: $error)."\n";
                 $response_list[$namespaceName] = false;
