@@ -144,15 +144,9 @@ class ApolloClient
             curl_multi_remove_handle($multi_ch,$req['ch']);
             curl_close($req['ch']);
             if ($code == 200) {
-				$result = json_decode($result, true);
-				$content = "";
-				foreach($result["configurations"] as $key => $value){
-					$content .= "\n" . $key . " = " . $value;
-				}
                 //数据不落盘放在共享内存里面 不落盘
                 $shm_key = ftok("/data/srv", 'c');
                 $shm_id = shmop_open($shm_key, "c", 0666, 20971520);
-
                 //先获取缓存里面是不是已经有配置存在，如果有配置需要把已有配置和刚刚读取到的配置合并下。
                 $size = shmop_read($shm_id, 0, 10);
                 $shmop = shmop_read($shm_id, 10, (int)$size);
